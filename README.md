@@ -1,6 +1,6 @@
 # Creality Control Integration for Home Assistant
 
-This custom integration allows Home Assistant users to monitor and control their Creality 3D printers. It offers capabilities such as viewing current print status and sending pause/resume and stop commands directly from the Home Assistant interface. This integration has been specifically tested with the Creality Halot resin printer and is based on WebSocket communication discovered through Wireshark capture while running the Halot software connected to the printer.
+This custom integration allows Home Assistant users to monitor and control their Creality 3D printers. It offers capabilities such as viewing current print status and sending pause/resume and stop commands directly from the Home Assistant interface. This integration has been specifically tested with the Creality Halot resin printer and Creality K1SE FDM printer, and is based on WebSocket communication discovered through Wireshark capture while running the Halot software connected to the printer.
 
 ## Features
 
@@ -41,11 +41,11 @@ You will need the following information to set up the integration:
 
 - **Host**: IP address of your Creality printer.
 - **Port**: Network port for the printer (default: `18188`).
-- **Password**: Your printer's password, if set.
+- **Password**: Your printer's password, if set. For K1SE printers, you can often leave this field empty if no password has been configured.
 
 ## Important Considerations
 
-- **Printer Online**: Ensure your printer is online and connected to the same network as Home Assistant for successful integration. The integration is specifically tested with the Creality Halot resin printer.
+- **Printer Online**: Ensure your printer is online and connected to the same network as Home Assistant for successful integration. The integration is specifically tested with the Creality Halot resin printer and Creality K1SE FDM printer.
 - **Control Limitations**: Pause/Resume and Stop commands are only functional when there is an active print job. Home Assistant does not support uploading print files or starting prints due to limitations.
 
 ## Support

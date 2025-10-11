@@ -51,6 +51,10 @@ class CrealityDataCoordinator(DataUpdateCoordinator):
                     return None
 
     def generate_token(self, password):
+        # Handle empty password case
+        if not password:
+            password = ""
+        
         key = unhexlify("6138356539643638")
         cipher = DES.new(key[:8], DES.MODE_ECB)
         padded_password = pad(password.encode(), DES.block_size)

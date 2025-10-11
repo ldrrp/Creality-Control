@@ -32,7 +32,7 @@ class CrealityControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required("host"): cv.string,
                 vol.Required("port", default=18188): cv.port,
-                vol.Required("password"): cv.string,
+                vol.Optional("password", default=""): cv.string,
             }),
             errors=errors,
         )
@@ -56,6 +56,10 @@ class CrealityControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def generate_token(self, password):
         """Generate a token based on the password."""
+        # Handle empty password case
+        if not password:
+            password = ""
+        
         key = unhexlify("6138356539643638")
         cipher = DES.new(key[:8], DES.MODE_ECB)
         padded_password = pad(password.encode(), DES.block_size)
