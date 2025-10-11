@@ -15,6 +15,20 @@ This custom integration allows Home Assistant users to monitor and control their
 
 ## Installation
 
+### Option 1: HACS (Recommended)
+
+1. Make sure you have [HACS](https://hacs.xyz/) installed.
+2. Open HACS and go to **Integrations**.
+3. Click the three dots menu and select **Custom repositories**.
+4. Add this repository URL: `https://github.com/SiloCityLabs/Creality-Control`
+5. Select **Integration** as the category.
+6. Click **Add** and then **Install**.
+7. Restart Home Assistant.
+8. Navigate to **Configuration** > **Integrations** and click **+ Add Integration**.
+9. Search for "Creality Control" and input your printer's details as prompted.
+
+### Option 2: Manual Installation
+
 1. Clone this repository or download the latest release.
 2. Copy the `creality_control` folder to your `custom_components` directory in your Home Assistant configuration directory.
 3. Restart Home Assistant to recognize the new integration.
@@ -36,7 +50,7 @@ You will need the following information to set up the integration:
 
 ## Support
 
-For support, questions, or contributions, please visit the [GitHub issue tracker](https://github.com/Klangen82/Creality-Control/issues).
+For support, questions, or contributions, please visit the [GitHub issue tracker](https://github.com/SiloCityLabs/Creality-Control/issues).
 
 ## Disclaimer
 
@@ -46,4 +60,4 @@ This integration is not officially affiliated with Creality. Use it at your own 
 
 This Home Assistant integration is released under the [MIT License](LICENSE).
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/klangen82)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/SiloCityLabs)

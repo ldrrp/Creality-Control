@@ -1,13 +1,12 @@
 {
-  "domain": "creality_control",
-  "name": "Creality Control",
-  "codeowners": ["@Klangen82"],
+  "domain": "creality_control_scl",
+  "name": "Creality Control (SCL)",
+  "codeowners": ["@SiloCityLabs"],
   "config_flow": true,
-  "version": "2024.14.1",
+  "version": "2025.10.11",
   "requirements": ["aiohttp", "pycryptodome"],
   "dependencies": [],
-  "codeowners": [],
   "iot_class": "local_polling",
-  "documentation": "https://github.com/Klangen82/Creality-Control",
-  "issue_tracker": "https://github.com/Klangen82/Creality-Control/issues"
+  "documentation": "https://github.com/SiloCityLabs/Creality-Control",
+  "issue_tracker": "https://github.com/SiloCityLabs/Creality-Control/issues"
 }

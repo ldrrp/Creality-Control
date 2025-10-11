@@ -1,0 +1,9 @@
+{
+  "name": "Creality Control (SCL)",
+  "content_in_root": false,
+  "filename": "creality_control_scl",
+  "country": ["US", "DE", "FR", "ES", "IT", "NL", "PL", "SE"],
+  "homeassistant": "2021.6.0",
+  "render_readme": true,
+  "iot_class": "Local Polling"
+}
