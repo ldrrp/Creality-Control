@@ -6,10 +6,24 @@ from .const import DOMAIN
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Creality Control buttons from a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([
+    buttons = [
         CrealityControlButton(coordinator, "Pause/Resume Print", "PRINT_PAUSE"),
         CrealityControlButton(coordinator, "Stop Print", "PRINT_STOP"),
-    ])
+    ]
+    
+    # Add K1C-specific buttons if available
+    if coordinator.data and coordinator.data.get("model") in ["K1C", "K1", "K1 Max"]:
+        buttons.extend([
+            CrealityControlButton(coordinator, "Home All Axes", "G28"),
+            CrealityControlButton(coordinator, "Home X Axis", "G28 X"),
+            CrealityControlButton(coordinator, "Home Y Axis", "G28 Y"),
+            CrealityControlButton(coordinator, "Home Z Axis", "G28 Z"),
+            CrealityControlButton(coordinator, "Emergency Stop", "M112"),
+            CrealityControlButton(coordinator, "Toggle Fan", "M106 S255"),
+            CrealityControlButton(coordinator, "Turn Off Fan", "M106 S0"),
+        ])
+    
+    async_add_entities(buttons)
 
 class CrealityControlButton(ButtonEntity):
     """Defines a Creality Control button."""
@@ -27,9 +41,23 @@ class CrealityControlButton(ButtonEntity):
 
     @property
     def device_info(self):
+        """Return information about the device this button is part of."""
+        # Try to detect printer model from data if available
+        model = "Creality Printer"
+        if self.coordinator.data:
+            if "model" in self.coordinator.data:
+                model = self.coordinator.data["model"]
+            elif "printerModel" in self.coordinator.data:
+                model = self.coordinator.data["printerModel"]
+            elif "detected_model" in self.coordinator.data:
+                model = self.coordinator.data["detected_model"]
+        
         return {
             "identifiers": {(DOMAIN, self.coordinator.config['host'])},
-            "name": "Creality Printer",
+            "name": f"Creality {model}",
             "manufacturer": "Creality",
-            # Add any other device info as needed
+            "model": model,
+            "sw_version": self.coordinator.data.get("firmware", "Unknown") if self.coordinator.data else "Unknown",
+            "suggested_area": "Workshop",
+            "device_type": "3d_printer"
         }

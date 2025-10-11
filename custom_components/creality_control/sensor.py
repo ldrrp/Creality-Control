@@ -1,5 +1,4 @@
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.helpers.entity import Entity
 from datetime import timedelta
 from .const import DOMAIN
 
@@ -7,30 +6,74 @@ async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Creality Control sensors from a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     sensors = [
-        CrealitySensor(coordinator, "printStatus", "Status"),
-        CrealitySensor(coordinator, "filename", "Filename"),
-        CrealityTimeLeftSensor(coordinator, "printRemainTime", "Time Left"),
-        CrealitySensor(coordinator, "progress", "Progress", unit_of_measurement="%"),
-        CrealitySensor(coordinator, "curSliceLayer", "Current Layer"),
-        CrealitySensor(coordinator, "sliceLayerCount", "Total Layers"),
-        CrealitySensor(coordinator, "printExposure", "Print Exposure", unit_of_measurement="s"),
-        CrealitySensor(coordinator, "layerThickness", "Layer Thickness", unit_of_measurement="mm"),
-        CrealitySensor(coordinator, "printHeight", "Rising Height", unit_of_measurement="mm"),
-        CrealitySensor(coordinator, "bottomExposureNum", "Bottom Layers"),
-        CrealitySensor(coordinator, "initExposure", "Initial Exposure", unit_of_measurement="s"),
-        CrealitySensor(coordinator, "delayLight", "Turn off Delay", unit_of_measurement="s"),
-        CrealitySensor(coordinator, "eleSpeed", "Motor Speed", unit_of_measurement="mm/s"),
-        CrealitySensor(coordinator, "resin", "Resin"),
-        # Add any additional sensors you need here
+        # Print Status and Progress
+        CrealitySensor(coordinator, "state", "Print State"),
+        CrealitySensor(coordinator, "deviceState", "Device State"),
+        CrealitySensor(coordinator, "printProgress", "Print Progress", unit_of_measurement="%"),
+        CrealitySensor(coordinator, "layer", "Current Layer"),
+        CrealitySensor(coordinator, "TotalLayer", "Total Layers"),
+        CrealityTimeLeftSensor(coordinator, "printLeftTime", "Time Left"),
+        CrealitySensor(coordinator, "printJobTime", "Print Job Time", unit_of_measurement="s"),
+        CrealitySensor(coordinator, "printFileName", "Print Filename"),
+        CrealitySensor(coordinator, "printId", "Print ID"),
+        
+        # Temperature Sensors
+        CrealitySensor(coordinator, "nozzleTemp", "Nozzle Temperature", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "targetNozzleTemp", "Target Nozzle Temperature", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "bedTemp0", "Bed Temperature", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "targetBedTemp0", "Target Bed Temperature", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "boxTemp", "Box Temperature", unit_of_measurement="°C"),
+        
+        # Position and Movement
+        CrealitySensor(coordinator, "curPosition", "Current Position"),
+        CrealitySensor(coordinator, "realTimeSpeed", "Real Time Speed", unit_of_measurement="mm/s"),
+        CrealitySensor(coordinator, "realTimeFlow", "Real Time Flow", unit_of_measurement="mm³/s"),
+        CrealitySensor(coordinator, "curFeedratePct", "Feedrate", unit_of_measurement="%"),
+        CrealitySensor(coordinator, "curFlowratePct", "Flowrate", unit_of_measurement="%"),
+        
+        # Fan Controls
+        CrealitySensor(coordinator, "fan", "Fan Status"),
+        CrealitySensor(coordinator, "fanAuxiliary", "Auxiliary Fan"),
+        CrealitySensor(coordinator, "fanCase", "Case Fan"),
+        CrealitySensor(coordinator, "auxiliaryFanPct", "Auxiliary Fan Speed", unit_of_measurement="%"),
+        CrealitySensor(coordinator, "caseFanPct", "Case Fan Speed", unit_of_measurement="%"),
+        CrealitySensor(coordinator, "modelFanPct", "Model Fan Speed", unit_of_measurement="%"),
+        
+        # Material and Usage
+        CrealitySensor(coordinator, "usedMaterialLength", "Used Material Length", unit_of_measurement="mm"),
+        CrealitySensor(coordinator, "materialDetect", "Material Detection"),
+        CrealitySensor(coordinator, "materialStatus", "Material Status"),
+        
+        # System Information
+        CrealitySensor(coordinator, "model", "Printer Model"),
+        CrealitySensor(coordinator, "hostname", "Hostname"),
+        CrealitySensor(coordinator, "modelVersion", "Firmware Version"),
+        CrealitySensor(coordinator, "connect", "Connection Status"),
+        CrealitySensor(coordinator, "tfCard", "TF Card Status"),
+        CrealitySensor(coordinator, "video", "Camera Status"),
+        
+        # Advanced Settings
+        CrealitySensor(coordinator, "pressureAdvance", "Pressure Advance"),
+        CrealitySensor(coordinator, "smoothTime", "Smooth Time", unit_of_measurement="s"),
+        CrealitySensor(coordinator, "velocityLimits", "Velocity Limits", unit_of_measurement="mm/s"),
+        CrealitySensor(coordinator, "accelerationLimits", "Acceleration Limits", unit_of_measurement="mm/s²"),
+        CrealitySensor(coordinator, "cornerVelocityLimits", "Corner Velocity Limits", unit_of_measurement="mm/s"),
+        
+        # Legacy Halot sensors (for backward compatibility)
+        CrealitySensor(coordinator, "printStatus", "Legacy Status"),
+        CrealitySensor(coordinator, "filename", "Legacy Filename"),
+        CrealityTimeLeftSensor(coordinator, "printRemainTime", "Legacy Time Left"),
+        CrealitySensor(coordinator, "progress", "Legacy Progress", unit_of_measurement="%"),
+        CrealitySensor(coordinator, "curSliceLayer", "Legacy Current Layer"),
+        CrealitySensor(coordinator, "sliceLayerCount", "Legacy Total Layers"),
     ]
     async_add_entities(sensors)
 
-class CrealitySensor(CoordinatorEntity, Entity):
+class CrealitySensor(CoordinatorEntity):
     """Defines a single Creality sensor."""
 
     def __init__(self, coordinator, data_key, name_suffix, unit_of_measurement=None):
         super().__init__(coordinator)
-        self.coordinator = coordinator
         self.data_key = data_key
         self._attr_name = f"Creality {name_suffix}"
         self._attr_unique_id = f"{coordinator.config['host']}_{data_key}"
@@ -49,15 +92,35 @@ class CrealitySensor(CoordinatorEntity, Entity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        # Special handling for the "Progress" sensor to calculate its value
+        if not self.coordinator.data:
+            return "Unknown"
+            
+        # Special handling for progress calculations
         if self.data_key == "progress":
+            # Try K1C format first
+            if "printProgress" in self.coordinator.data:
+                return self.coordinator.data["printProgress"]
+            # Fallback to legacy calculation
             cur_layer = self.coordinator.data.get("curSliceLayer", 0)
             total_layers = self.coordinator.data.get("sliceLayerCount", 0)
             try:
                 progress = (float(cur_layer) / float(total_layers)) * 100 if total_layers else 0
                 return round(progress, 2)
-            except ValueError:  # In case of non-integer values
+            except ValueError:
                 return 0
+        elif self.data_key == "printProgress":
+            # Direct K1C progress value
+            return self.coordinator.data.get("printProgress", 0)
+        elif self.data_key == "legacy_progress":
+            # Legacy progress calculation
+            cur_layer = self.coordinator.data.get("curSliceLayer", 0)
+            total_layers = self.coordinator.data.get("sliceLayerCount", 0)
+            try:
+                progress = (float(cur_layer) / float(total_layers)) * 100 if total_layers else 0
+                return round(progress, 2)
+            except ValueError:
+                return 0
+        
         return self.coordinator.data.get(self.data_key, "Unknown")
 
     @property
@@ -68,11 +131,24 @@ class CrealitySensor(CoordinatorEntity, Entity):
     @property
     def device_info(self):
         """Return information about the device this sensor is part of."""
+        # Try to detect printer model from data if available
+        model = "Creality Printer"
+        if self.coordinator.data:
+            if "model" in self.coordinator.data:
+                model = self.coordinator.data["model"]
+            elif "printerModel" in self.coordinator.data:
+                model = self.coordinator.data["printerModel"]
+            elif "detected_model" in self.coordinator.data:
+                model = self.coordinator.data["detected_model"]
+        
         return {
             "identifiers": {(DOMAIN, self.coordinator.config['host'])},
-            "name": "Creality Printer",
+            "name": f"Creality {model}",
             "manufacturer": "Creality",
-            "model": "Creality Printer",  # Update with your model, have not found a way to get this information
+            "model": model,
+            "sw_version": self.coordinator.data.get("firmware", "Unknown") if self.coordinator.data else "Unknown",
+            "suggested_area": "Workshop",
+            "device_type": "3d_printer"
         }
 
 class CrealityTimeLeftSensor(CrealitySensor):
@@ -81,5 +157,7 @@ class CrealityTimeLeftSensor(CrealitySensor):
     @property
     def state(self):
         """Return the state of the sensor, converting time to HH:MM:SS format."""
+        if not self.coordinator.data:
+            return "00:00:00"
         time_left = int(self.coordinator.data.get(self.data_key, 0))
         return str(timedelta(seconds=time_left))

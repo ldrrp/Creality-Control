@@ -2,10 +2,29 @@
 
 This custom integration allows Home Assistant users to monitor and control their Creality 3D printers. It offers capabilities such as viewing current print status and sending pause/resume and stop commands directly from the Home Assistant interface. This integration has been specifically tested with the Creality Halot resin printer and Creality K1SE FDM printer, and is based on WebSocket communication discovered through Wireshark capture while running the Halot software connected to the printer.
 
+## Supported Devices
+
+### ✅ Tested and Compatible
+- **Creality K1SE** (FDM Printer) - Port 9999, no password required
+- **Creality K1** (FDM Printer) - Port 9999, no password required  
+- **Creality K1 Max** (FDM Printer) - Port 9999, no password required
+- **Creality K1C** (FDM Printer) - Port 9999, no password required, includes camera support
+- **Creality Halot Series** (Resin Printers) - Port 18188, password may be required
+
+### 🔧 Potentially Compatible
+- **Other Creality printers** with WebSocket support on ports 9999 or 18188
+
 ## Features
 
 - **Print Status Monitoring**: Track the status of ongoing prints, including progress, remaining time, current layer, and more.
 - **Print Control**: Directly pause/resume and stop prints from within Home Assistant.
+- **Temperature Monitoring**: Real-time nozzle, bed, and chamber temperature tracking.
+- **Fan Control**: Monitor and control auxiliary, case, and model fans.
+- **Position Tracking**: Real-time X, Y, Z position and movement speed monitoring.
+- **Material Usage**: Track filament usage and material detection status.
+- **Camera Support**: Built-in camera support for K1C and compatible models.
+- **Advanced Controls**: Home axes, emergency stop, and fan control for K1 series.
+- **System Information**: Firmware version, hostname, and connection status.
 - **Notifications**: Configure Home Assistant to notify you about print completions or issues (additional configuration required).
 
 ## Prerequisites

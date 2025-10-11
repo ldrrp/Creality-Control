@@ -7,7 +7,18 @@
   "requirements": ["aiohttp", "pycryptodome"],
   "dependencies": [],
   "iot_class": "local_polling",
+  "homeassistant": "2024.6.0",
   "documentation": "https://github.com/SiloCityLabs/Creality-Control",
   "issue_tracker": "https://github.com/SiloCityLabs/Creality-Control/issues",
-  "icon": "custom_components/creality_control/icon.png"
+  "icon": "custom_components/creality_control/icon.png",
+  "integration_type": "device",
+  "ssdp": [
+    {
+      "st": "urn:creality:device:3dprinter:1"
+    }
+  ],
+  "zeroconf": [
+    "_creality-print._tcp.local.",
+    "_creality-ws._tcp.local."
+  ]
 }
