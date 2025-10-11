@@ -30,7 +30,7 @@ This custom integration allows Home Assistant users to monitor and control their
 ### Option 2: Manual Installation
 
 1. Clone this repository or download the latest release.
-2. Copy the `creality_control` folder to your `custom_components` directory in your Home Assistant configuration directory.
+2. Copy the `custom_components/creality_control` folder to your `custom_components` directory in your Home Assistant configuration directory.
 3. Restart Home Assistant to recognize the new integration.
 4. Navigate to **Configuration** > **Integrations** and click **+ Add Integration**.
 5. Search for "Creality Control" and input your printer's details as prompted.
