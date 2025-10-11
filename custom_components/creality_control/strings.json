@@ -4,10 +4,11 @@
     "step": {
       "user": {
         "title": "Connect to your Creality Printer",
-        "description": "Enter the IP address and port of your Creality printer.",
+        "description": "Enter the IP address and port of your Creality printer.\n\n{port_note}",
         "data": {
           "host": "Host",
-          "port": "Port"
+          "port": "Port",
+          "password": "Password (optional)"
         }
       }
     },

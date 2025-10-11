@@ -40,7 +40,7 @@ This custom integration allows Home Assistant users to monitor and control their
 You will need the following information to set up the integration:
 
 - **Host**: IP address of your Creality printer.
-- **Port**: Network port for the printer (default: `18188`).
+- **Port**: Network port for the printer (default: `9999` for K1SE and newer printers, `18188` for older Halot series).
 - **Password**: Your printer's password, if set. For K1SE printers, you can often leave this field empty if no password has been configured.
 
 ## Important Considerations

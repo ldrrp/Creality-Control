@@ -31,9 +31,12 @@ class CrealityControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required("host"): cv.string,
-                vol.Required("port", default=18188): cv.port,
+                vol.Required("port", default=9999): cv.port,
                 vol.Optional("password", default=""): cv.string,
             }),
+            description_placeholders={
+                "port_note": "K1SE and newer printers use port 9999. Older printers (Halot series) may use port 18188."
+            },
             errors=errors,
         )
 

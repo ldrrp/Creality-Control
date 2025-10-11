@@ -3,10 +3,11 @@
   "name": "Creality Control (SCL)",
   "codeowners": ["@SiloCityLabs"],
   "config_flow": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "requirements": ["aiohttp", "pycryptodome"],
   "dependencies": [],
   "iot_class": "local_polling",
   "documentation": "https://github.com/SiloCityLabs/Creality-Control",
-  "issue_tracker": "https://github.com/SiloCityLabs/Creality-Control/issues"
+  "issue_tracker": "https://github.com/SiloCityLabs/Creality-Control/issues",
+  "icon": "custom_components/creality_control/icon.png"
 }
