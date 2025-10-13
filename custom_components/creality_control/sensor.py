@@ -179,7 +179,8 @@ class CrealitySensor(CoordinatorEntity):
             "manufacturer": "Creality",
             "model": model,
             "sw_version": self._parse_firmware_version(),
-            "suggested_area": "Workshop"
+            "suggested_area": "Workshop",
+            "configuration_url": f"http://{self.coordinator.config['host']}:80"
         }
 
 class CrealityTimeLeftSensor(CrealitySensor):

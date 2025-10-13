@@ -31,7 +31,8 @@ class CrealityCamera(Camera):
             "manufacturer": "Creality",
             "model": coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer',
             "sw_version": self._parse_firmware_version(),
-            "suggested_area": "Workshop"
+            "suggested_area": "Workshop",
+            "configuration_url": f"http://{coordinator.config['host']}:80"
         }
 
     @property
