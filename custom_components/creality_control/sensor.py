@@ -147,8 +147,7 @@ class CrealitySensor(CoordinatorEntity):
             "manufacturer": "Creality",
             "model": model,
             "sw_version": self.coordinator.data.get("firmware", "Unknown") if self.coordinator.data else "Unknown",
-            "suggested_area": "Workshop",
-            "device_type": "3d_printer"
+            "suggested_area": "Workshop"
         }
 
 class CrealityTimeLeftSensor(CrealitySensor):

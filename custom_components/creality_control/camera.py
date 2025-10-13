@@ -12,9 +12,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     """Set up Creality camera from a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     
-    # Check if camera is available
-    if coordinator.data and coordinator.data.get("video", 0) == 1:
-        async_add_entities([CrealityCamera(coordinator)])
+    # Always add the camera entity - it will handle availability internally
+    async_add_entities([CrealityCamera(coordinator)])
 
 class CrealityCamera(Camera):
     """Representation of a Creality printer camera."""
@@ -23,16 +22,15 @@ class CrealityCamera(Camera):
         """Initialize the camera."""
         super().__init__()
         self.coordinator = coordinator
-        self._attr_name = f"Creality {coordinator.data.get('model', 'Printer')} Camera"
+        self._attr_name = f"Creality {coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer'} Camera"
         self._attr_unique_id = f"{coordinator.config['host']}_camera"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.config['host'])},
-            "name": f"Creality {coordinator.data.get('model', 'Printer')}",
+            "name": f"Creality {coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer'}",
             "manufacturer": "Creality",
-            "model": coordinator.data.get('model', 'Printer'),
+            "model": coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer',
             "sw_version": coordinator.data.get("modelVersion", "Unknown") if coordinator.data else "Unknown",
-            "suggested_area": "Workshop",
-            "device_type": "3d_printer"
+            "suggested_area": "Workshop"
         }
 
     @property
@@ -49,6 +47,13 @@ class CrealityCamera(Camera):
     def device_info(self):
         """Return information about the device this camera is part of."""
         return self._attr_device_info
+
+    @property
+    def available(self):
+        """Return True if the camera is available."""
+        return (self.coordinator.data and 
+                self.coordinator.data.get("video", 0) == 1 and
+                self.coordinator.last_update_success)
 
     async def async_camera_image(self, width=None, height=None):
         """Return bytes of camera image."""
