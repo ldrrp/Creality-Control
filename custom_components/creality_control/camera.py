@@ -76,13 +76,25 @@ class CrealityCamera(Camera):
             }
             
             async with aiohttp.ClientSession() as session:
-                async with session.get(camera_url, headers=headers, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                async with session.get(camera_url, headers=headers, timeout=aiohttp.ClientTimeout(total=15)) as response:
                     _LOGGER.debug(f"Camera response status: {response.status}")
                     _LOGGER.debug(f"Camera response content-type: {response.headers.get('content-type', 'unknown')}")
                     if response.status == 200:
-                        image_data = await response.read()
-                        _LOGGER.debug(f"Successfully fetched camera image ({len(image_data)} bytes)")
-                        return image_data
+                        # For MJPEG streams, we need to read the first frame
+                        # Set a shorter timeout for reading the stream
+                        try:
+                            async with asyncio.timeout(10):
+                                # Read a chunk of data (first frame)
+                                image_data = await response.content.read(1024*1024)  # Read up to 1MB
+                                if image_data:
+                                    _LOGGER.debug(f"Successfully fetched camera image ({len(image_data)} bytes)")
+                                    return image_data
+                                else:
+                                    _LOGGER.warning("No image data received from camera")
+                                    return None
+                        except asyncio.TimeoutError:
+                            _LOGGER.warning("Timeout reading camera stream data")
+                            return None
                     else:
                         _LOGGER.warning(f"Camera URL {camera_url} returned status {response.status}")
                         return None
