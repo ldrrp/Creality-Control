@@ -82,21 +82,23 @@ class CrealityCamera(Camera):
                     if response.status == 200:
                         # For MJPEG streams, we need to extract a single JPEG frame
                         try:
-                            async with asyncio.timeout(10):
-                                # Read the stream data
-                                stream_data = await response.content.read(1024*1024)  # Read up to 1MB
-                                if stream_data:
-                                    # Extract JPEG frame from MJPEG stream
+                            async with asyncio.timeout(15):
+                                # Read the stream data in chunks until we have enough
+                                stream_data = b""
+                                async for chunk in response.content.iter_chunked(8192):
+                                    stream_data += chunk
+                                    # Try to extract JPEG frame after each chunk
                                     jpeg_data = self._extract_jpeg_from_mjpeg(stream_data)
                                     if jpeg_data:
                                         _LOGGER.debug(f"Successfully extracted JPEG frame ({len(jpeg_data)} bytes)")
                                         return jpeg_data
-                                    else:
-                                        _LOGGER.warning("Could not extract JPEG frame from MJPEG stream")
-                                        return None
-                                else:
-                                    _LOGGER.warning("No stream data received from camera")
-                                    return None
+                                    # Stop if we've read too much data (safety limit)
+                                    if len(stream_data) > 1024*1024:  # 1MB limit
+                                        _LOGGER.warning("Stream data too large, stopping")
+                                        break
+                                
+                                _LOGGER.warning("Could not extract JPEG frame from MJPEG stream")
+                                return None
                         except asyncio.TimeoutError:
                             _LOGGER.warning("Timeout reading camera stream data")
                             return None
@@ -164,32 +166,60 @@ class CrealityCamera(Camera):
     def _extract_jpeg_from_mjpeg(self, stream_data):
         """Extract a single JPEG frame from MJPEG stream data."""
         try:
-            # MJPEG streams use boundary markers (--boundary)
-            # Look for JPEG start marker (0xFF 0xD8) after boundary
-            jpeg_start = b'\xff\xd8'  # JPEG start marker
-            jpeg_end = b'\xff\xd9'    # JPEG end marker
+            # MJPEG format: --boundary\r\nContent-Type: image/jpeg\r\nContent-Length: XXXX\r\n\r\n[JPEG_DATA]
+            boundary_marker = b'--boundarydonotcross'
+            content_length = b'Content-Length: '
             
-            # Find the first JPEG start marker
-            start_pos = stream_data.find(jpeg_start)
-            if start_pos == -1:
-                _LOGGER.warning("No JPEG start marker found in stream")
+            # Find the boundary marker
+            boundary_pos = stream_data.find(boundary_marker)
+            if boundary_pos == -1:
+                _LOGGER.warning("No boundary marker found in stream")
                 return None
             
-            # Find the corresponding JPEG end marker
-            end_pos = stream_data.find(jpeg_end, start_pos)
-            if end_pos == -1:
-                _LOGGER.warning("No JPEG end marker found in stream")
+            # Find Content-Length header
+            length_start = stream_data.find(content_length, boundary_pos)
+            if length_start == -1:
+                _LOGGER.warning("No Content-Length header found")
+                return None
+            
+            # Extract the content length
+            length_end = stream_data.find(b'\r\n', length_start)
+            if length_end == -1:
+                _LOGGER.warning("Malformed Content-Length header")
+                return None
+            
+            try:
+                length_str = stream_data[length_start + len(content_length):length_end]
+                jpeg_length = int(length_str)
+                _LOGGER.debug(f"JPEG content length: {jpeg_length} bytes")
+            except ValueError:
+                _LOGGER.warning(f"Could not parse content length: {length_str}")
+                return None
+            
+            # Find the start of JPEG data (after \r\n\r\n)
+            jpeg_start_marker = b'\r\n\r\n'
+            jpeg_start_pos = stream_data.find(jpeg_start_marker, boundary_pos)
+            if jpeg_start_pos == -1:
+                _LOGGER.warning("Could not find JPEG data start marker")
+                return None
+            
+            jpeg_data_start = jpeg_start_pos + len(jpeg_start_marker)
+            jpeg_data_end = jpeg_data_start + jpeg_length
+            
+            # Check if we have enough data
+            if jpeg_data_end > len(stream_data):
+                _LOGGER.warning(f"Not enough data: have {len(stream_data)}, need {jpeg_data_end}")
                 return None
             
             # Extract the JPEG frame
-            jpeg_frame = stream_data[start_pos:end_pos + 2]  # Include the end marker
+            jpeg_frame = stream_data[jpeg_data_start:jpeg_data_end]
             
-            # Verify it's a valid JPEG by checking the start and end markers
-            if jpeg_frame.startswith(jpeg_start) and jpeg_frame.endswith(jpeg_end):
+            # Verify it's a valid JPEG by checking the start marker
+            if jpeg_frame.startswith(b'\xff\xd8'):
                 _LOGGER.debug(f"Extracted JPEG frame: {len(jpeg_frame)} bytes")
                 return jpeg_frame
             else:
-                _LOGGER.warning("Extracted frame is not a valid JPEG")
+                _LOGGER.warning("Extracted frame does not start with JPEG marker")
                 return None
                 
         except Exception as e:
