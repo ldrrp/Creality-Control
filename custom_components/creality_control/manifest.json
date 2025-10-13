@@ -10,7 +10,7 @@
   "homeassistant": "2024.6.0",
   "documentation": "https://github.com/SiloCityLabs/Creality-Control",
   "issue_tracker": "https://github.com/SiloCityLabs/Creality-Control/issues",
-  "icon": "custom_components/creality_control/icon.png",
+  "icon": "mdi:printer-3d",
   "integration_type": "device",
   "ssdp": [
     {
