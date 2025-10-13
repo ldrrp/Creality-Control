@@ -25,14 +25,19 @@ class CrealityCamera(Camera):
         self.coordinator = coordinator
         self._attr_name = f"Creality {coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer'} Camera"
         self._attr_unique_id = f"{coordinator.config['host']}_camera"
+        # Get product image based on model
+        model = coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer'
+        product_image = self._get_product_image(model)
+        
         self._attr_device_info = {
             "identifiers": {(DOMAIN, coordinator.config['host'])},
-            "name": f"Creality {coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer'}",
+            "name": f"Creality {model}",
             "manufacturer": "Creality",
-            "model": coordinator.data.get('model', 'Printer') if coordinator.data else 'Printer',
+            "model": model,
             "sw_version": self._parse_firmware_version(),
             "suggested_area": "Workshop",
-            "configuration_url": f"http://{coordinator.config['host']}:80"
+            "configuration_url": f"http://{coordinator.config['host']}:80",
+            "product_image": product_image
         }
 
     @property
@@ -226,3 +231,51 @@ class CrealityCamera(Camera):
         except Exception as e:
             _LOGGER.error(f"Error extracting JPEG from MJPEG stream: {e}")
             return None
+
+    def _get_product_image(self, model):
+        """Get product image path based on printer model."""
+        if not model:
+            return None
+        
+        # Clean model name for filename
+        model_clean = model.replace(" ", "_").replace("-", "_").replace("(", "").replace(")", "").upper()
+        
+        # Map common model names to image filenames
+        model_mapping = {
+            "K1SE": "K1_SE",
+            "K1": "K1",
+            "K1_MAX": "K1_MAX", 
+            "K1C": "K1C",
+            "ENDER_3_V3_SE": "ENDER_3_V3_SE",
+            "ENDER_3_V3_KE": "ENDER_3_V3_KE",
+            "ENDER_3_V3": "ENDER_3_V3",
+            "ENDER_3_S1_PRO": "ENDER_3_S1_PRO",
+            "ENDER_3_S1": "ENDER_3_S1",
+            "ENDER_3_MAX_NEO": "ENDER_3_MAX_NEO",
+            "ENDER_5_S1": "ENDER_5_S1",
+            "ENDER_5_PRO": "ENDER_5_PRO",
+            "ENDER_7": "ENDER_7",
+            "ENDER_3_V2": "ENDER_3_V2",
+            "ENDER_3_PRO": "ENDER_3_PRO",
+            "ENDER_3": "ENDER_3",
+            "ENDER_5": "ENDER_5",
+            "CR_10": "CR_10",
+            "CR_10S": "CR_10S",
+            "CR_10S_PRO": "CR_10S_PRO",
+            "HALOT_ONE": "HALOT_ONE",
+            "HALOT_ONE_PLUS": "HALOT_ONE_PLUS",
+            "HALOT_SKY": "HALOT_SKY",
+            "HALOT_SKY_PRO": "HALOT_SKY_PRO",
+            "HALOT_MAGE": "HALOT_MAGE",
+            "HALOT_MAGE_PRO": "HALOT_MAGE_PRO",
+            "HALOT_MAGE_S": "HALOT_MAGE_S",
+            "HALOT_MAGE_8K": "HALOT_MAGE_8K",
+            "HALOT_MAGE_8K_PRO": "HALOT_MAGE_8K_PRO",
+            "HALOT_MAGE_8K_S": "HALOT_MAGE_8K_S"
+        }
+        
+        # Get the mapped filename or use the cleaned model name
+        image_filename = model_mapping.get(model_clean, model_clean)
+        
+        # Return the path to the product image
+        return f"custom_components/creality_control/images/{image_filename}.webp"
