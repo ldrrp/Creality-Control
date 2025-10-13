@@ -47,7 +47,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         # System Information
         CrealitySensor(coordinator, "model", "Printer Model"),
         CrealitySensor(coordinator, "hostname", "Hostname"),
-        CrealitySensor(coordinator, "modelVersion", "Firmware Version"),
+        CrealityFirmwareSensor(coordinator, "modelVersion", "Firmware Version"),
         CrealitySensor(coordinator, "connect", "Connection Status"),
         CrealitySensor(coordinator, "tfCard", "TF Card Status"),
         CrealitySensor(coordinator, "video", "Camera Status"),
@@ -128,6 +128,38 @@ class CrealitySensor(CoordinatorEntity):
         """Return the unit of measurement if defined."""
         return self._unit_of_measurement
 
+    def _parse_firmware_version(self):
+        """Parse firmware version from modelVersion data."""
+        if not self.coordinator.data:
+            return "Unknown"
+            
+        raw_version = self.coordinator.data.get("modelVersion", "")
+        if not raw_version:
+            return "Unknown"
+        
+        # Parse the version string: "printer hw ver:;printer sw ver:;DWIN hw ver:CR4CU220812S11;DWIN sw ver:1.3.3.46;"
+        try:
+            # Split by semicolon and find the DWIN software version
+            parts = raw_version.split(';')
+            for part in parts:
+                if 'DWIN sw ver:' in part:
+                    version = part.replace('DWIN sw ver:', '').strip()
+                    if version:
+                        return version
+            
+            # If no DWIN version found, try to find any version
+            for part in parts:
+                if 'sw ver:' in part and part.replace('sw ver:', '').strip():
+                    version = part.replace('sw ver:', '').strip()
+                    if version:
+                        return version
+                        
+        except Exception:
+            pass
+        
+        # Fallback to raw version if parsing fails
+        return raw_version
+
     @property
     def device_info(self):
         """Return information about the device this sensor is part of."""
@@ -146,7 +178,7 @@ class CrealitySensor(CoordinatorEntity):
             "name": f"Creality {model}",
             "manufacturer": "Creality",
             "model": model,
-            "sw_version": self.coordinator.data.get("firmware", "Unknown") if self.coordinator.data else "Unknown",
+            "sw_version": self._parse_firmware_version(),
             "suggested_area": "Workshop"
         }
 
@@ -160,3 +192,40 @@ class CrealityTimeLeftSensor(CrealitySensor):
             return "00:00:00"
         time_left = int(self.coordinator.data.get(self.data_key, 0))
         return str(timedelta(seconds=time_left))
+
+
+class CrealityFirmwareSensor(CrealitySensor):
+    """Specialized sensor class for handling firmware version data."""
+
+    @property
+    def state(self):
+        """Return a clean firmware version."""
+        if not self.coordinator.data:
+            return "Unknown"
+            
+        raw_version = self.coordinator.data.get(self.data_key, "")
+        if not raw_version:
+            return "Unknown"
+        
+        # Parse the version string: "printer hw ver:;printer sw ver:;DWIN hw ver:CR4CU220812S11;DWIN sw ver:1.3.3.46;"
+        try:
+            # Split by semicolon and find the DWIN software version
+            parts = raw_version.split(';')
+            for part in parts:
+                if 'DWIN sw ver:' in part:
+                    version = part.replace('DWIN sw ver:', '').strip()
+                    if version:
+                        return version
+            
+            # If no DWIN version found, try to find any version
+            for part in parts:
+                if 'sw ver:' in part and part.replace('sw ver:', '').strip():
+                    version = part.replace('sw ver:', '').strip()
+                    if version:
+                        return version
+                        
+        except Exception:
+            pass
+        
+        # Fallback to raw version if parsing fails
+        return raw_version
