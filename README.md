@@ -13,6 +13,8 @@ This custom integration allows Home Assistant users to monitor and control their
 - **Creality K1C** (FDM Printer) - Port 9999, no password required, includes camera support
 - **Creality Halot Series** (Resin Printers) - Port 18188, password may be required
 
+> **Want to help test?** Check out our [compatibility testing tracker](https://github.com/SiloCityLabs/Creality-Control/issues) to see which printers need testing and report your results!
+
 ### 🔧 Potentially Compatible
 - **Other Creality printers** with WebSocket support on ports 9999 or 18188
 
