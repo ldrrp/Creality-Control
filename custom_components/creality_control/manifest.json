@@ -16,9 +16,5 @@
     {
       "st": "urn:creality:device:3dprinter:1"
     }
-  ],
-  "zeroconf": [
-    "_creality-print._tcp.local.",
-    "_creality-ws._tcp.local."
   ]
 }

@@ -4,6 +4,7 @@ import homeassistant.helpers.config_validation as cv
 from aiohttp import ClientSession, ClientError, ClientTimeout
 import asyncio
 import logging
+import aiohttp
 from Crypto.Cipher import DES
 from Crypto.Util.Padding import pad
 from base64 import b64encode
@@ -70,34 +71,6 @@ class CrealityControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-    async def async_step_zeroconf(self, discovery_info):
-        """Handle Zeroconf discovery."""
-        _LOGGER.info("Zeroconf discovery: %s", discovery_info)
-        
-        host = discovery_info.get("host")
-        port = discovery_info.get("port")
-        
-        if not host:
-            return self.async_abort(reason="no_host")
-        
-        # If no port provided, try to detect it
-        if not port:
-            port = await self._detect_creality_port(host)
-            if not port:
-                return self.async_abort(reason="no_port")
-        
-        # Check if already configured
-        await self.async_set_unique_id(f"{host}:{port}")
-        self._abort_if_unique_id_configured()
-        
-        return self.async_create_entry(
-            title=f"Creality Printer ({host})",
-            data={
-                "host": host,
-                "port": port,
-                "password": "",
-            }
-        )
 
     async def _detect_creality_port(self, host: str) -> int | None:
         """Detect which port the Creality printer is using."""
@@ -140,16 +113,33 @@ class CrealityControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         token = self.generate_token(password)
         try:
             async with ClientSession() as session:
-                async with session.ws_connect(uri) as ws:
+                # Try with a longer timeout for the initial connection
+                async with session.ws_connect(uri, timeout=aiohttp.ClientTimeout(total=15)) as ws:
+                    # Just try to connect first, then send command
+                    _LOGGER.info("WebSocket connected successfully to %s:%s", host, port)
+                    
+                    # Send the command
                     await ws.send_json({"cmd": "GET_PRINT_STATUS", "token": token})
-                    async with async_timeout.timeout(10):
+                    _LOGGER.info("Command sent, waiting for response...")
+                    
+                    # Wait longer for response
+                    async with asyncio.timeout(15):
                         response = await ws.receive_json()
+                        _LOGGER.info("Received response: %s", response)
+                        
                         if "printStatus" in response and response["printStatus"] == "TOKEN_ERROR":
+                            _LOGGER.warning("Token error - password may be incorrect")
                             return False  # Token is invalid
                         return True  # Assuming any response with printStatus not TOKEN_ERROR is valid
+        except asyncio.TimeoutError:
+            _LOGGER.warning("WebSocket connection timeout to %s:%s", host, port)
+            return None
+        except aiohttp.ClientError as e:
+            _LOGGER.warning("WebSocket connection error to %s:%s: %s", host, port, e)
+            return None
         except Exception as e:
-            return None  # Unable to connect
-        return None  # In case the connection could not be established or an unexpected error occurred
+            _LOGGER.warning("Unexpected error connecting to %s:%s: %s", host, port, e)
+            return None
 
     def generate_token(self, password):
         """Generate a token based on the password."""
