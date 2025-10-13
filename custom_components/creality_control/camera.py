@@ -80,17 +80,22 @@ class CrealityCamera(Camera):
                     _LOGGER.debug(f"Camera response status: {response.status}")
                     _LOGGER.debug(f"Camera response content-type: {response.headers.get('content-type', 'unknown')}")
                     if response.status == 200:
-                        # For MJPEG streams, we need to read the first frame
-                        # Set a shorter timeout for reading the stream
+                        # For MJPEG streams, we need to extract a single JPEG frame
                         try:
                             async with asyncio.timeout(10):
-                                # Read a chunk of data (first frame)
-                                image_data = await response.content.read(1024*1024)  # Read up to 1MB
-                                if image_data:
-                                    _LOGGER.debug(f"Successfully fetched camera image ({len(image_data)} bytes)")
-                                    return image_data
+                                # Read the stream data
+                                stream_data = await response.content.read(1024*1024)  # Read up to 1MB
+                                if stream_data:
+                                    # Extract JPEG frame from MJPEG stream
+                                    jpeg_data = self._extract_jpeg_from_mjpeg(stream_data)
+                                    if jpeg_data:
+                                        _LOGGER.debug(f"Successfully extracted JPEG frame ({len(jpeg_data)} bytes)")
+                                        return jpeg_data
+                                    else:
+                                        _LOGGER.warning("Could not extract JPEG frame from MJPEG stream")
+                                        return None
                                 else:
-                                    _LOGGER.warning("No image data received from camera")
+                                    _LOGGER.warning("No stream data received from camera")
                                     return None
                         except asyncio.TimeoutError:
                             _LOGGER.warning("Timeout reading camera stream data")
@@ -155,3 +160,38 @@ class CrealityCamera(Camera):
         
         # Fallback to raw version if parsing fails
         return raw_version
+
+    def _extract_jpeg_from_mjpeg(self, stream_data):
+        """Extract a single JPEG frame from MJPEG stream data."""
+        try:
+            # MJPEG streams use boundary markers (--boundary)
+            # Look for JPEG start marker (0xFF 0xD8) after boundary
+            jpeg_start = b'\xff\xd8'  # JPEG start marker
+            jpeg_end = b'\xff\xd9'    # JPEG end marker
+            
+            # Find the first JPEG start marker
+            start_pos = stream_data.find(jpeg_start)
+            if start_pos == -1:
+                _LOGGER.warning("No JPEG start marker found in stream")
+                return None
+            
+            # Find the corresponding JPEG end marker
+            end_pos = stream_data.find(jpeg_end, start_pos)
+            if end_pos == -1:
+                _LOGGER.warning("No JPEG end marker found in stream")
+                return None
+            
+            # Extract the JPEG frame
+            jpeg_frame = stream_data[start_pos:end_pos + 2]  # Include the end marker
+            
+            # Verify it's a valid JPEG by checking the start and end markers
+            if jpeg_frame.startswith(jpeg_start) and jpeg_frame.endswith(jpeg_end):
+                _LOGGER.debug(f"Extracted JPEG frame: {len(jpeg_frame)} bytes")
+                return jpeg_frame
+            else:
+                _LOGGER.warning("Extracted frame is not a valid JPEG")
+                return None
+                
+        except Exception as e:
+            _LOGGER.error(f"Error extracting JPEG from MJPEG stream: {e}")
+            return None
