@@ -6,6 +6,8 @@ This custom integration allows Home Assistant users to monitor and control their
 
 ### ✅ Tested and Compatible
 - **Creality K1SE** (FDM Printer) - Port 9999, no password required
+
+### 🤔 Need help testing
 - **Creality K1** (FDM Printer) - Port 9999, no password required  
 - **Creality K1 Max** (FDM Printer) - Port 9999, no password required
 - **Creality K1C** (FDM Printer) - Port 9999, no password required, includes camera support
