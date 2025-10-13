@@ -38,9 +38,6 @@ class CrealityControlConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required("port", default=9999): cv.port,
                 vol.Optional("password", default=""): cv.string,
             }),
-            description_placeholders={
-                "port_note": "K1SE and newer printers use port 9999. Older printers (Halot series) may use port 18188."
-            },
             errors=errors,
         )
 

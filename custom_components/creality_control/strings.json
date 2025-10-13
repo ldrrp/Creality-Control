@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Connect to your Creality Printer",
-        "description": "Enter the IP address and port of your Creality printer.\n\n{port_note}",
+        "description": "Enter the IP address and port of your Creality printer.\n\nK1SE and newer printers use port 9999. Older printers (Halot series) may use port 18188.",
         "data": {
           "host": "Host",
           "port": "Port",
