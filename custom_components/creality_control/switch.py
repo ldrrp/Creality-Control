@@ -10,7 +10,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
     switches = [
         CrealitySwitch(coordinator, "fan", "Fan", "M106 S255", "M106 S0"),
-        CrealitySwitch(coordinator, "light", "Light", "M355 S255", "M355 S0"),
+        CrealitySwitch(coordinator, "light", "Light", "light_on", "light_off"),
     ]
     async_add_entities(switches)
 
@@ -24,6 +24,7 @@ class CrealitySwitch(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = f"{coordinator.config['host']}_switch_{switch_type}"
         self._on_command = on_command
         self._off_command = off_command
+        self._use_websocket = switch_type in ["light"]  # Use WebSocket for light, G-code for fan
 
     @property
     def name(self):
@@ -50,13 +51,31 @@ class CrealitySwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_on(self):
         """Turn the switch on."""
-        success = await self.coordinator.send_command(self._on_command)
+        if self._use_websocket:
+            # Use WebSocket JSON for light control
+            if self._switch_type == "light":
+                success = await self.coordinator.send_websocket_command({"method": "set", "params": {"lightSw": 1}})
+            else:
+                success = await self.coordinator.send_command(self._on_command)
+        else:
+            # Use G-code for fan control
+            success = await self.coordinator.send_command(self._on_command)
+        
         if not success:
             _LOGGER.warning(f"Failed to turn on {self._switch_type} - WebSocket may be disconnected")
 
     async def async_turn_off(self):
         """Turn the switch off."""
-        success = await self.coordinator.send_command(self._off_command)
+        if self._use_websocket:
+            # Use WebSocket JSON for light control
+            if self._switch_type == "light":
+                success = await self.coordinator.send_websocket_command({"method": "set", "params": {"lightSw": 0}})
+            else:
+                success = await self.coordinator.send_command(self._off_command)
+        else:
+            # Use G-code for fan control
+            success = await self.coordinator.send_command(self._off_command)
+        
         if not success:
             _LOGGER.warning(f"Failed to turn off {self._switch_type} - WebSocket may be disconnected")
 

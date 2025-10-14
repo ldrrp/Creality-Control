@@ -387,6 +387,13 @@ class CrealityDataCoordinator(DataUpdateCoordinator):
             return False
         
         return await self.ws_client.send_json(command)
+    
+    async def send_websocket_command(self, command: dict) -> bool:
+        """Send a WebSocket JSON command to the printer."""
+        if not self.ws_client:
+            _LOGGER.warning("WebSocket client not available")
+            return False
+        return await self.ws_client.send_json(command)
         
     async def async_unload(self) -> None:
         """Clean up resources on unload."""
