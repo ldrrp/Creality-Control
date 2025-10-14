@@ -120,7 +120,7 @@ class CrealityWebSocketClient:
         self._set_state(ConnectionState.CONNECTING)
         
         if not self.session or self.session.closed:
-            self.session = await async_get_clientsession(self.coordinator.hass)
+            self.session = async_get_clientsession(self.coordinator.hass)
             
         uri = f"ws://{self.host}:{self.port}/"
         timeout = aiohttp.ClientTimeout(total=15, connect=10)
@@ -296,7 +296,7 @@ class CrealityDataCoordinator(DataUpdateCoordinator):
     async def _poll_data(self) -> Dict[str, Any]:
         """Fallback polling method when WebSocket is unavailable."""
         try:
-            session = await async_get_clientsession(self.hass)
+            session = async_get_clientsession(self.hass)
             uri = f"ws://{self.config['host']}:{self.config['port']}/"
             token = self._generate_token(self.config['password'])
             
@@ -409,7 +409,7 @@ async def _detect_creality_port(hass: HomeAssistant, host: str) -> int | None:
 async def _test_creality_connection(hass: HomeAssistant, host: str, port: int) -> bool:
     """Test if a Creality printer is responding on the given host:port."""
     try:
-        session = await async_get_clientsession(hass)
+        session = async_get_clientsession(hass)
         uri = f"ws://{host}:{port}/"
         
         async with session.ws_connect(uri, timeout=aiohttp.ClientTimeout(total=5)) as ws:
