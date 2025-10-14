@@ -403,7 +403,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     
     # Use modern async_forward_entry_setups
-    await hass.config_entries.async_forward_entry_setups(entry, ['sensor', 'button', 'camera', 'number'])
+    await hass.config_entries.async_forward_entry_setups(entry, ['sensor', 'button', 'camera', 'number', 'switch'])
     
     return True
 
@@ -412,7 +412,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_unload()
     
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, ['sensor', 'button', 'camera', 'number'])
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, ['sensor', 'button', 'camera', 'number', 'switch'])
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
     

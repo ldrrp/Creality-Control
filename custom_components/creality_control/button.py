@@ -22,10 +22,6 @@ async def async_setup_entry(hass, entry, async_add_entities):
             CrealityControlButton(coordinator, "Home Y Axis", "G28 Y"),
             CrealityControlButton(coordinator, "Home Z Axis", "G28 Z"),
             CrealityControlButton(coordinator, "Emergency Stop", "M112"),
-            CrealityControlButton(coordinator, "Toggle Fan", "M106 S255"),
-            CrealityControlButton(coordinator, "Turn Off Fan", "M106 S0"),
-            CrealityControlButton(coordinator, "Toggle Light", "M355 S255"),
-            CrealityControlButton(coordinator, "Turn Off Light", "M355 S0"),
         ])
         
         # Add AI-related buttons if AI features are available
