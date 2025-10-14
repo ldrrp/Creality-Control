@@ -161,6 +161,14 @@ class CrealitySensor(CoordinatorEntity):
         return raw_version
 
     @property
+    def available(self):
+        """Return True if the sensor is available."""
+        # Check if WebSocket is healthy
+        if hasattr(self.coordinator, 'ws_client') and self.coordinator.ws_client:
+            return self.coordinator.ws_client.is_healthy() and self.coordinator.last_update_success
+        return self.coordinator.last_update_success
+
+    @property
     def device_info(self):
         """Return information about the device this sensor is part of."""
         # Try to detect printer model from data if available

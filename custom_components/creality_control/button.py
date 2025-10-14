@@ -1,7 +1,10 @@
+import logging
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry  
 from homeassistant.core import HomeAssistant
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Creality Control buttons from a config entry."""
@@ -37,7 +40,9 @@ class CrealityControlButton(ButtonEntity):
 
     async def async_press(self):
         """Handle the button press."""
-        await self.coordinator.send_command(self._command)
+        success = await self.coordinator.send_command(self._command)
+        if not success:
+            _LOGGER.warning(f"Failed to send command {self._command} - WebSocket may be disconnected")
 
     @property
     def device_info(self):
