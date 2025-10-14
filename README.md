@@ -71,6 +71,17 @@ You will need the following information to set up the integration:
 - **Printer Online**: Ensure your printer is online and connected to the same network as Home Assistant for successful integration. The integration is specifically tested with the Creality Halot resin printer and Creality K1SE FDM printer.
 - **Control Limitations**: Pause/Resume and Stop commands are only functional when there is an active print job. Home Assistant does not support uploading print files or starting prints due to limitations.
 
+## Images for HA Cards ##
+
+Example Card configuration
+```
+type: picture-entity
+entity: sensor.creality_printer_model
+image: /creality_control/images/K1_SE.webp
+```
+
+[Available images](/custom_components/creality_control/images/)
+
 ## Support
 
 For support, questions, or contributions, please visit the [GitHub issue tracker](https://github.com/SiloCityLabs/Creality-Control/issues).
