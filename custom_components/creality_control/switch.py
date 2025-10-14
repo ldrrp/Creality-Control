@@ -9,7 +9,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Creality Control switch entities from a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     switches = [
-        CrealitySwitch(coordinator, "fan", "Fan", "M106 S255", "M106 S0"),
+        CrealitySwitch(coordinator, "fan", "Fan", "fan_on", "fan_off"),
         CrealitySwitch(coordinator, "light", "Light", "light_on", "light_off"),
     ]
     async_add_entities(switches)
@@ -24,7 +24,7 @@ class CrealitySwitch(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = f"{coordinator.config['host']}_switch_{switch_type}"
         self._on_command = on_command
         self._off_command = off_command
-        self._use_websocket = switch_type in ["light"]  # Use WebSocket for light, G-code for fan
+        self._use_websocket = switch_type in ["light", "fan"]  # Use WebSocket for both light and fan
 
     @property
     def name(self):
@@ -52,13 +52,15 @@ class CrealitySwitch(CoordinatorEntity, SwitchEntity):
     async def async_turn_on(self):
         """Turn the switch on."""
         if self._use_websocket:
-            # Use WebSocket JSON for light control
+            # Use WebSocket JSON for control
             if self._switch_type == "light":
                 success = await self.coordinator.send_websocket_command({"method": "set", "params": {"lightSw": 1}})
+            elif self._switch_type == "fan":
+                success = await self.coordinator.send_websocket_command({"method": "set", "params": {"fan": 1}})
             else:
                 success = await self.coordinator.send_command(self._on_command)
         else:
-            # Use G-code for fan control
+            # Use G-code for other controls
             success = await self.coordinator.send_command(self._on_command)
         
         if not success:
@@ -67,13 +69,15 @@ class CrealitySwitch(CoordinatorEntity, SwitchEntity):
     async def async_turn_off(self):
         """Turn the switch off."""
         if self._use_websocket:
-            # Use WebSocket JSON for light control
+            # Use WebSocket JSON for control
             if self._switch_type == "light":
                 success = await self.coordinator.send_websocket_command({"method": "set", "params": {"lightSw": 0}})
+            elif self._switch_type == "fan":
+                success = await self.coordinator.send_websocket_command({"method": "set", "params": {"fan": 0}})
             else:
                 success = await self.coordinator.send_command(self._off_command)
         else:
-            # Use G-code for fan control
+            # Use G-code for other controls
             success = await self.coordinator.send_command(self._off_command)
         
         if not success:
