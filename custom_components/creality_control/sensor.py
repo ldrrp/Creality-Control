@@ -55,6 +55,46 @@ async def async_setup_entry(hass, entry, async_add_entities):
         CrealitySensor(coordinator, "tfCard", "TF Card Status"),
         CrealitySensor(coordinator, "video", "Camera Status"),
         
+        # AI Features (K1SE/K1C)
+        CrealitySensor(coordinator, "aiDetection", "AI Detection"),
+        CrealitySensor(coordinator, "aiFirstFloor", "AI First Floor"),
+        CrealitySensor(coordinator, "aiPausePrint", "AI Pause Print"),
+        CrealitySensor(coordinator, "aiSw", "AI Switch"),
+        
+        # Light Control
+        CrealitySensor(coordinator, "lightSw", "Light Switch"),
+        
+        # Auto Home Status
+        CrealitySensor(coordinator, "autohome", "Auto Home Status"),
+        CrealitySensor(coordinator, "enableSelfTest", "Self Test Enabled"),
+        CrealitySensor(coordinator, "withSelfTest", "Self Test Status"),
+        
+        # Error and Status
+        CrealityErrorSensor(coordinator, "err", "Error Status"),
+        CrealitySensor(coordinator, "powerLoss", "Power Loss Detection"),
+        CrealitySensor(coordinator, "upgradeStatus", "Upgrade Status"),
+        CrealitySensor(coordinator, "repoPlrStatus", "Repository Status"),
+        
+        # Temperature Limits
+        CrealitySensor(coordinator, "maxBedTemp", "Max Bed Temperature", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "maxNozzleTemp", "Max Nozzle Temperature", unit_of_measurement="°C"),
+        
+        # Additional Bed Temperatures
+        CrealitySensor(coordinator, "bedTemp1", "Bed Temperature 1", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "bedTemp2", "Bed Temperature 2", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "targetBedTemp1", "Target Bed Temperature 1", unit_of_measurement="°C"),
+        CrealitySensor(coordinator, "targetBedTemp2", "Target Bed Temperature 2", unit_of_measurement="°C"),
+        
+        # PID Control
+        CrealitySensor(coordinator, "bedTempAutoPid", "Bed PID Control"),
+        CrealitySensor(coordinator, "nozzleTempAutoPid", "Nozzle PID Control"),
+        
+        # Video Features
+        CrealitySensor(coordinator, "video1", "Video Stream 1"),
+        CrealitySensor(coordinator, "videoElapse", "Video Elapse"),
+        CrealitySensor(coordinator, "videoElapseFrame", "Video Elapse Frame"),
+        CrealitySensor(coordinator, "videoElapseInterval", "Video Elapse Interval"),
+        
         # Advanced Settings
         CrealitySensor(coordinator, "pressureAdvance", "Pressure Advance"),
         CrealitySensor(coordinator, "smoothTime", "Smooth Time", unit_of_measurement="s"),
@@ -245,3 +285,26 @@ class CrealityFirmwareSensor(CrealitySensor):
         
         # Fallback to raw version if parsing fails
         return raw_version
+
+
+class CrealityErrorSensor(CrealitySensor):
+    """Specialized sensor class for handling error status data."""
+
+    @property
+    def state(self):
+        """Return error status information."""
+        if not self.coordinator.data:
+            return "Unknown"
+            
+        error_data = self.coordinator.data.get(self.data_key, {})
+        if not error_data or not isinstance(error_data, dict):
+            return "No Errors"
+        
+        # Extract error information
+        errcode = error_data.get("errcode", 0)
+        key = error_data.get("key", 0)
+        
+        if errcode == 0 and key == 0:
+            return "No Errors"
+        
+        return f"Error {errcode} (Key: {key})"

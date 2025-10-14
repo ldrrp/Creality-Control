@@ -14,8 +14,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
         CrealityControlButton(coordinator, "Stop Print", "PRINT_STOP"),
     ]
     
-    # Add K1C-specific buttons if available
-    if coordinator.data and coordinator.data.get("model") in ["K1C", "K1", "K1 Max"]:
+    # Add K1C/K1SE-specific buttons if available
+    if coordinator.data and coordinator.data.get("model") in ["K1C", "K1", "K1 Max", "K1 SE"]:
         buttons.extend([
             CrealityControlButton(coordinator, "Home All Axes", "G28"),
             CrealityControlButton(coordinator, "Home X Axis", "G28 X"),
@@ -24,7 +24,18 @@ async def async_setup_entry(hass, entry, async_add_entities):
             CrealityControlButton(coordinator, "Emergency Stop", "M112"),
             CrealityControlButton(coordinator, "Toggle Fan", "M106 S255"),
             CrealityControlButton(coordinator, "Turn Off Fan", "M106 S0"),
+            CrealityControlButton(coordinator, "Toggle Light", "M355 S255"),
+            CrealityControlButton(coordinator, "Turn Off Light", "M355 S0"),
         ])
+        
+        # Add AI-related buttons if AI features are available
+        if coordinator.data.get("aiSw", 0) == 1:
+            buttons.extend([
+                CrealityControlButton(coordinator, "Enable AI Detection", "M960 S1"),
+                CrealityControlButton(coordinator, "Disable AI Detection", "M960 S0"),
+                CrealityControlButton(coordinator, "AI Pause Print", "M960 P1"),
+                CrealityControlButton(coordinator, "AI Resume Print", "M960 P0"),
+            ])
     
     async_add_entities(buttons)
 
