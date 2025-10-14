@@ -194,9 +194,20 @@ class CrealityWebSocketClient:
                 elif self.port == 18188:
                     data["detected_model"] = "Halot Series (Resin)"
             
-            # Update coordinator data
+            # Update coordinator data properly
             self.coordinator.data = data
+            self.coordinator.last_update_success = True
+            self.coordinator.last_update_time = time.time()
             self.coordinator.async_update_listeners()
+            
+            # Debug logging for key values
+            _LOGGER.debug(f"WebSocket data received: {len(data)} fields")
+            if "nozzleTemp" in data:
+                _LOGGER.debug(f"Nozzle temp: {data['nozzleTemp']}")
+            if "bedTemp0" in data:
+                _LOGGER.debug(f"Bed temp: {data['bedTemp0']}")
+            if "printProgress" in data:
+                _LOGGER.debug(f"Progress: {data['printProgress']}")
             
     async def _handle_connection_error(self) -> None:
         """Handle connection errors with exponential backoff."""
@@ -291,7 +302,13 @@ class CrealityDataCoordinator(DataUpdateCoordinator):
         if not self.ws_client or not self.ws_client.is_healthy():
             # If WebSocket is not healthy, try to get data via polling
             return await self._poll_data()
-        return self.data or {}
+        
+        # If WebSocket is healthy, return current data (it's updated in real-time)
+        if self.data:
+            return self.data
+        
+        # If no data yet, try polling once
+        return await self._poll_data()
         
     async def _poll_data(self) -> Dict[str, Any]:
         """Fallback polling method when WebSocket is unavailable."""

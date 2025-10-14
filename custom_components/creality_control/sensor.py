@@ -1,6 +1,9 @@
+import logging
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from datetime import timedelta
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Creality Control sensors from a config entry."""
@@ -93,6 +96,7 @@ class CrealitySensor(CoordinatorEntity):
     def state(self):
         """Return the state of the sensor."""
         if not self.coordinator.data:
+            _LOGGER.debug(f"Sensor {self.data_key}: No coordinator data")
             return "Unknown"
             
         # Special handling for progress calculations
@@ -121,7 +125,10 @@ class CrealitySensor(CoordinatorEntity):
             except ValueError:
                 return 0
         
-        return self.coordinator.data.get(self.data_key, "Unknown")
+        value = self.coordinator.data.get(self.data_key, "Unknown")
+        if value == "Unknown":
+            _LOGGER.debug(f"Sensor {self.data_key}: Key not found in data. Available keys: {list(self.coordinator.data.keys())}")
+        return value
 
     @property
     def unit_of_measurement(self):
