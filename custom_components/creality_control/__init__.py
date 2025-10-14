@@ -427,18 +427,23 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Creality Control component."""
+    return True
+
+@callback
+def async_register_static_paths(hass: HomeAssistant) -> None:
+    """Register static paths for the integration."""
     import os
     # Register the images directory for serving product images
     images_path = os.path.join(hass.config.config_dir, "custom_components", DOMAIN, "images")
     _LOGGER.info(f"Registering static path: /{DOMAIN}/images -> {images_path}")
     _LOGGER.info(f"Images directory exists: {os.path.exists(images_path)}")
     
+    # Use the correct Home Assistant API for static paths
     hass.http.register_static_path(
         f"/{DOMAIN}/images",
         images_path,
         cache_headers=False
     )
-    return True
 
 async def async_handle_ssdp_discovery(hass: HomeAssistant, discovery_info: dict) -> None:
     """Handle SSDP discovery."""
