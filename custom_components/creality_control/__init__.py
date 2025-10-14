@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from enum import Enum
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant import config_entries
@@ -428,6 +428,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Set up the Creality Control component."""
     return True
+
+@callback
+def async_register_static_paths(hass: HomeAssistant) -> None:
+    """Register static paths for the integration."""
+    # Register the images directory for serving product images
+    hass.http.register_static_path(
+        f"/{DOMAIN}/images",
+        hass.config.path("custom_components", DOMAIN, "images"),
+        cache_headers=False
+    )
 
 async def async_handle_ssdp_discovery(hass: HomeAssistant, discovery_info: dict) -> None:
     """Handle SSDP discovery."""
