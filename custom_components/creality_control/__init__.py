@@ -87,6 +87,20 @@ class CrealityWebSocketClient:
         except Exception as e:
             _LOGGER.error(f"Failed to send command {command}: {e}")
             return False
+    
+    async def send_json(self, payload: dict) -> bool:
+        """Send a JSON payload to the printer."""
+        if self.state != ConnectionState.CONNECTED or not self.ws or self.ws.closed:
+            _LOGGER.warning("Cannot send JSON payload: WebSocket not connected")
+            return False
+            
+        try:
+            await self.ws.send_json(payload)
+            _LOGGER.debug(f"Sent JSON payload: {payload}")
+            return True
+        except Exception as e:
+            _LOGGER.error(f"Failed to send JSON payload: {e}")
+            return False
             
     def _generate_token(self, password: str) -> str:
         """Generate authentication token."""

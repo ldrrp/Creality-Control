@@ -1,5 +1,5 @@
 import logging
-from homeassistant.components.number import NumberEntity
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 
@@ -26,6 +26,7 @@ class CrealityTempNumber(CoordinatorEntity, NumberEntity):
         self._attr_native_max_value = max_value
         self._attr_native_step = step
         self._attr_native_unit_of_measurement = unit_of_measurement
+        self._attr_mode = NumberMode.BOX
 
     @property
     def name(self):
