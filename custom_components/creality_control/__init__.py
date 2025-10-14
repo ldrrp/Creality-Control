@@ -194,14 +194,20 @@ class CrealityWebSocketClient:
                 elif self.port == 18188:
                     data["detected_model"] = "Halot Series (Resin)"
             
-            # Update coordinator data properly
-            self.coordinator.data = data
+            # Merge with existing data instead of replacing
+            if self.coordinator.data:
+                # Merge new data with existing data
+                self.coordinator.data.update(data)
+            else:
+                # First message - set the full dataset
+                self.coordinator.data = data
+            
             self.coordinator.last_update_success = True
             self.coordinator.last_update_time = time.time()
             self.coordinator.async_update_listeners()
             
             # Debug logging for key values
-            _LOGGER.debug(f"WebSocket data received: {len(data)} fields")
+            _LOGGER.debug(f"WebSocket data received: {len(data)} fields, total data: {len(self.coordinator.data)} fields")
             if "nozzleTemp" in data:
                 _LOGGER.debug(f"Nozzle temp: {data['nozzleTemp']}")
             if "bedTemp0" in data:
