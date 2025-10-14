@@ -55,9 +55,15 @@ class CrealityCamera(Camera):
     @property
     def available(self):
         """Return True if the camera is available."""
+        # Check if WebSocket is healthy
+        ws_healthy = True
+        if hasattr(self.coordinator, 'ws_client') and self.coordinator.ws_client:
+            ws_healthy = self.coordinator.ws_client.is_healthy()
+            
         return (self.coordinator.data and 
                 self.coordinator.data.get("video", 0) == 1 and
-                self.coordinator.last_update_success)
+                self.coordinator.last_update_success and
+                ws_healthy)
 
     async def async_camera_image(self, width=None, height=None):
         """Return bytes of camera image."""
