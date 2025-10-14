@@ -36,6 +36,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 CrealityControlButton(coordinator, "AI Pause Print", "M960 P1"),
                 CrealityControlButton(coordinator, "AI Resume Print", "M960 P0"),
             ])
+        
     
     async_add_entities(buttons)
 
@@ -109,4 +110,6 @@ class CrealityControlButton(ButtonEntity):
         
         # Fallback to raw version if parsing fails
         return raw_version
+
+
 

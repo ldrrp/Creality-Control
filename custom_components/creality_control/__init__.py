@@ -357,6 +357,22 @@ class CrealityDataCoordinator(DataUpdateCoordinator):
             _LOGGER.warning("WebSocket client not available")
             return False
         return await self.ws_client.send_command(command)
+    
+    async def send_temp_command(self, temp_type: str, temperature: int) -> bool:
+        """Send a temperature control command to the printer."""
+        if not self.ws_client:
+            _LOGGER.warning("WebSocket client not available")
+            return False
+        
+        if temp_type == "nozzle":
+            command = {"method": "set", "params": {"nozzleTempControl": temperature}}
+        elif temp_type == "bed":
+            command = {"method": "set", "params": {"bedTempControl": {"num": 0, "val": temperature}}}
+        else:
+            _LOGGER.error(f"Invalid temperature type: {temp_type}")
+            return False
+        
+        return await self.ws_client.send_json(command)
         
     async def async_unload(self) -> None:
         """Clean up resources on unload."""
@@ -373,7 +389,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     
     # Use modern async_forward_entry_setups
-    await hass.config_entries.async_forward_entry_setups(entry, ['sensor', 'button', 'camera'])
+    await hass.config_entries.async_forward_entry_setups(entry, ['sensor', 'button', 'camera', 'number'])
     
     return True
 
@@ -382,7 +398,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = hass.data[DOMAIN][entry.entry_id]
     await coordinator.async_unload()
     
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, ['sensor', 'button', 'camera'])
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, ['sensor', 'button', 'camera', 'number'])
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
     
