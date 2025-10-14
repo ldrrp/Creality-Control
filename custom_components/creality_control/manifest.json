@@ -1,6 +1,6 @@
 {
   "domain": "creality_control",
-  "name": "Creality Control (SCL)",
+  "name": "Creality Control",
   "codeowners": ["@SiloCityLabs"],
   "config_flow": true,
   "version": "1.2.0",
