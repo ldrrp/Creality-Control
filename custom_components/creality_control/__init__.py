@@ -135,6 +135,7 @@ class CrealityWebSocketClient:
             return
             
         self._set_state(ConnectionState.CONNECTING)
+        _LOGGER.info(f"🔌 Connecting to WebSocket at {self.host}:{self.port}")
         
         if not self.session or self.session.closed:
             self.session = async_get_clientsession(self.coordinator.hass)
@@ -201,6 +202,9 @@ class CrealityWebSocketClient:
     async def _handle_message(self, data: Dict[str, Any]) -> None:
         """Handle incoming WebSocket message."""
         self.last_message_time = time.time()
+        
+        _LOGGER.info(f"🔍 _handle_message called with {len(data) if data else 0} fields")
+        _LOGGER.info(f"🔍 coordinator.data exists: {bool(self.coordinator.data)}")
         
         # Update coordinator data
         if data:
@@ -455,6 +459,8 @@ class CrealityDataCoordinator(DataUpdateCoordinator):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the integration from a config entry."""
+    print("🚀 CREALITY CONTROL INTEGRATION STARTING UP - CHECK LOGS!")
+    _LOGGER.info("🚀 Creality Control integration starting up")
     coordinator = CrealityDataCoordinator(hass, entry.data)
     await coordinator.async_config_entry_first_refresh()
     
