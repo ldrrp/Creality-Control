@@ -211,9 +211,6 @@ class CrealityWebSocketClient:
                 elif self.port == 18188:
                     data["detected_model"] = "Halot Series (Resin)"
             
-            # Check if this is the first message (initial connection)
-            is_initial_connection = not self.coordinator.data
-            
             # Merge with existing data instead of replacing
             if self.coordinator.data:
                 # Merge new data with existing data
@@ -221,15 +218,13 @@ class CrealityWebSocketClient:
             else:
                 # First message - set the full dataset
                 self.coordinator.data = data
+                _LOGGER.info("🚀 First WebSocket message - sending raw data to endpoint")
+                _LOGGER.info(f"Data keys: {list(data.keys())}")
+                await self._send_raw_data_to_endpoint(data)
             
             self.coordinator.last_update_success = True
             self.coordinator.last_update_time = time.time()
             self.coordinator.async_update_listeners()
-            
-            # Send raw websocket data to endpoint on initial connection
-            if is_initial_connection:
-                _LOGGER.info("Initial WebSocket connection detected - sending raw data to endpoint")
-                await self._send_raw_data_to_endpoint(data)
             
             # Debug logging for key values
             _LOGGER.debug(f"WebSocket data received: {len(data)} fields, total data: {len(self.coordinator.data)} fields")
@@ -248,24 +243,42 @@ class CrealityWebSocketClient:
                 "data": data
             }
             
-            _LOGGER.info(f"Sending raw websocket data to endpoint: {len(data)} fields")
+            _LOGGER.info(f"📤 Sending raw websocket data to endpoint: {len(data)} fields")
+            _LOGGER.info(f"📤 Endpoint URL: {ENDPOINT_URL}")
+            _LOGGER.info(f"📤 Sample data keys: {list(data.keys())[:10]}...")  # Show first 10 keys
             
             # Send to endpoint
             session = async_get_clientsession(self.coordinator.hass)
+            _LOGGER.info("📤 Making HTTP POST request...")
+            
             async with session.post(
                 ENDPOINT_URL,
                 json=payload,
                 headers={"Content-Type": "application/json"},
                 timeout=aiohttp.ClientTimeout(total=10)
             ) as response:
+                _LOGGER.info(f"📤 Response received - Status: {response.status}")
+                
                 if response.status == 200:
                     result = await response.json()
-                    _LOGGER.info(f"Successfully sent raw printer data to endpoint. Response: {result}")
+                    _LOGGER.info(f"✅ Successfully sent raw printer data to endpoint. Response: {result}")
                 else:
-                    _LOGGER.warning(f"Endpoint returned status {response.status}: {await response.text()}")
+                    response_text = await response.text()
+                    _LOGGER.warning(f"❌ Endpoint returned status {response.status}: {response_text}")
                     
         except Exception as e:
-            _LOGGER.error(f"Failed to send raw data to endpoint: {e}")
+            _LOGGER.error(f"❌ Failed to send raw data to endpoint: {e}")
+            _LOGGER.error(f"❌ Exception type: {type(e).__name__}")
+            import traceback
+            _LOGGER.error(f"❌ Traceback: {traceback.format_exc()}")
+    
+    async def force_send_data_to_endpoint(self) -> None:
+        """Force send current data to endpoint (for testing)."""
+        if self.coordinator.data:
+            _LOGGER.info("🔧 Force sending data to endpoint for testing")
+            await self._send_raw_data_to_endpoint(self.coordinator.data)
+        else:
+            _LOGGER.warning("No data available to send")
             
     async def _handle_connection_error(self) -> None:
         """Handle connection errors with exponential backoff."""
