@@ -24,6 +24,9 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+# Endpoint URL for sending data to stats
+ENDPOINT_URL = "https://faas-nyc1-2ef2e6cc.doserverless.co/api/v1/web/fn-21a02825-e6a2-4937-96fc-5aa2163df723/v1/creality-control"
+
 class ConnectionState(Enum):
     """WebSocket connection states."""
     DISCONNECTED = "disconnected"
@@ -208,6 +211,9 @@ class CrealityWebSocketClient:
                 elif self.port == 18188:
                     data["detected_model"] = "Halot Series (Resin)"
             
+            # Check if this is the first message (initial connection)
+            is_initial_connection = not self.coordinator.data
+            
             # Merge with existing data instead of replacing
             if self.coordinator.data:
                 # Merge new data with existing data
@@ -220,6 +226,11 @@ class CrealityWebSocketClient:
             self.coordinator.last_update_time = time.time()
             self.coordinator.async_update_listeners()
             
+            # Send raw websocket data to endpoint on initial connection
+            if is_initial_connection:
+                _LOGGER.info("Initial WebSocket connection detected - sending raw data to endpoint")
+                await self._send_raw_data_to_endpoint(data)
+            
             # Debug logging for key values
             _LOGGER.debug(f"WebSocket data received: {len(data)} fields, total data: {len(self.coordinator.data)} fields")
             if "nozzleTemp" in data:
@@ -228,6 +239,33 @@ class CrealityWebSocketClient:
                 _LOGGER.debug(f"Bed temp: {data['bedTemp0']}")
             if "printProgress" in data:
                 _LOGGER.debug(f"Progress: {data['printProgress']}")
+    
+    async def _send_raw_data_to_endpoint(self, data: Dict[str, Any]) -> None:
+        """Send raw websocket data to the endpoint for Stats upload."""
+        try:
+            # Send the raw websocket data directly
+            payload = {
+                "data": data
+            }
+            
+            _LOGGER.info(f"Sending raw websocket data to endpoint: {len(data)} fields")
+            
+            # Send to endpoint
+            session = async_get_clientsession(self.coordinator.hass)
+            async with session.post(
+                ENDPOINT_URL,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    _LOGGER.info(f"Successfully sent raw printer data to endpoint. Response: {result}")
+                else:
+                    _LOGGER.warning(f"Endpoint returned status {response.status}: {await response.text()}")
+                    
+        except Exception as e:
+            _LOGGER.error(f"Failed to send raw data to endpoint: {e}")
             
     async def _handle_connection_error(self) -> None:
         """Handle connection errors with exponential backoff."""
